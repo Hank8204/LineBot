@@ -6,7 +6,7 @@ from linebot.v3.messaging import MessagingApi, Configuration, ApiClient, TextMes
 from linebot.v3.webhook import WebhookHandler
 from linebot.v3.webhooks import MessageEvent, TextMessageContent
 from linebot.v3.exceptions import InvalidSignatureError
-from utils.gpt_helper import extract_fridge_info
+from utils.gpt_helper import handle_user_message
 from utils.notion_helper import save_to_notion
 
 # 載入 .env
@@ -50,12 +50,18 @@ def handle_message(event):
         user_text = event.message.text
 
         try:
-            extracted = extract_fridge_info(user_text)
-            save_to_notion(extracted)
-            reply_text = (
-                f"✅ 已紀錄：{extracted['物品名稱']}（{extracted['擁有者']}），"
-                f"保存至 {extracted['保存期限']}"
-            )
+            result = handle_user_message(user_text)
+            if result["intent"] == "fridge":
+                save_to_notion(result["data"])
+                reply_text = (
+                    f"✅ 已紀錄：{result['data']['物品名稱']}（{result['data']['擁有者']}），"
+                    f"保存至 {result['data']['保存期限']}"
+                )
+            elif result["intent"] == "chat":
+                reply_text = result["answer"]
+            else:
+                reply_text = "不好意思，我不太懂你的意思，可以再說一次嗎？"
+
         except Exception as e:
             print("❌ 錯誤：", e)
             reply_text = f"❌ 發生錯誤：{str(e)}"

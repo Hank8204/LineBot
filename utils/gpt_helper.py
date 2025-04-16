@@ -5,12 +5,16 @@ from openai import OpenAI
 
 client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 
-def extract_fridge_info(text):
+def handle_user_message(text):
     today = datetime.today().strftime("%Y-%m-%d")
     system_prompt = (
-        "你是一個冰箱共享記錄助理，請從自然語言中解析出以下欄位："
-        "物品名稱、擁有者、放入日期（預設今天）、保存期限（解析成 YYYY-MM-DD）。"
-        f"回傳 JSON 格式，今天是：{today}"
+        "你是一個 LINE Bot 助理，負責以下兩件事：\\n"
+        "1. 如果使用者的語句與冰箱共享記錄有關（如：放入物品、保存期限），請解析為以下 JSON 格式：\\n"
+        "{\\\"intent\\\": \\\"fridge\\\", \\\"data\\\": { \\\"物品名稱\\\": ..., \\\"擁有者\\\": ..., \\\"放入日期\\\": ..., \\\"保存期限\\\": ... }}\\n"
+        f"其中放入日期預設為今天（{today}），保存期限請解析為 YYYY-MM-DD。\\n"
+        "2. 若不是冰箱記錄用途，請直接回應使用者的問題，並回傳：\\n"
+        "{\\\"intent\\\": \\\"chat\\\", \\\"answer\\\": \\\"你的回覆內容\\\"}\\n"
+        "請務必輸出標準 JSON 格式。\\n"
     )
 
     response = client.chat.completions.create(
