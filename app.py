@@ -3,7 +3,7 @@ from flask import Flask, request, abort
 from dotenv import load_dotenv
 
 from linebot.v3.messaging import MessagingApi, Configuration, ApiClient, TextMessage, ReplyMessageRequest
-from linebot.v3.webhooks import WebhookHandler, MessageEvent, TextMessageContent
+from linebot.v3.webhooks import WebhookParser, MessageEvent, TextMessageContent
 from linebot.v3.exceptions import InvalidSignatureError
 from utils.gpt_helper import extract_fridge_info
 from utils.notion_helper import save_to_notion
@@ -23,7 +23,7 @@ if channel_secret is None or channel_access_token is None:
     raise ValueError("請確認 LINE_CHANNEL_SECRET 與 LINE_CHANNEL_ACCESS_TOKEN 已正確設定為環境變數")
 
 # 初始化 Webhook Parser 與 Messaging API
-parser = WebhookHandler(channel_secret)
+parser = WebhookParser(channel_secret)
 configuration = Configuration(access_token=channel_access_token)
 api_client = ApiClient(configuration)
 messaging_api = MessagingApi(api_client)
