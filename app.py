@@ -24,7 +24,7 @@ if channel_secret is None or channel_access_token is None:
     raise ValueError("請確認 LINE_CHANNEL_SECRET 與 LINE_CHANNEL_ACCESS_TOKEN 已正確設定為環境變數")
 
 # 初始化 Webhook Parser 與 Messaging API
-parser = WebhookHandler(channel_secret)
+handler = WebhookHandler(channel_secret)
 configuration = Configuration(access_token=channel_access_token)
 api_client = ApiClient(configuration)
 messaging_api = MessagingApi(api_client)
@@ -40,33 +40,32 @@ def callback():
     signature = request.headers.get("X-Line-Signature", "")
     body = request.get_data(as_text=True)
 
-    try:
-        events = parser.parse(body, signature)
-    except InvalidSignatureError:
-        abort(400)
-
-    for event in events:
-        if isinstance(event, MessageEvent) and isinstance(event.message, TextMessageContent):
-            user_text = event.message.text
-
-            try:
-                extracted = extract_fridge_info(user_text)
-                save_to_notion(extracted)
-                reply_text = (
-                    f"✅ 已紀錄：{extracted['物品名稱']}（{extracted['擁有者']}），"
-                    f"保存至 {extracted['保存期限']}"
-                )
-            except Exception as e:
-                reply_text = f"❌ 發生錯誤：{str(e)}"
-
-            messaging_api.reply_message(
-                ReplyMessageRequest(
-                    reply_token=event.reply_token,
-                    messages=[TextMessage(text=reply_text)]
-                )
-            )
+    handler.handle(body, signature)
 
     return "OK"
+
+@handler.add(MessageEvent)
+def handle_message(event):
+    if isinstance(event.message, TextMessageContent):
+        user_text = event.message.text
+
+        try:
+            extracted = extract_fridge_info(user_text)
+            save_to_notion(extracted)
+            reply_text = (
+                f"✅ 已紀錄：{extracted['物品名稱']}（{extracted['擁有者']}），"
+                f"保存至 {extracted['保存期限']}"
+            )
+        except Exception as e:
+            print("❌ 錯誤：", e)
+            reply_text = f"❌ 發生錯誤：{str(e)}"
+
+        messaging_api.reply_message(
+            ReplyMessageRequest(
+                reply_token=event.reply_token,
+                messages=[TextMessage(text=reply_text)]
+            )
+        )
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=int(os.environ.get("PORT", 5000)))
