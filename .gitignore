@@ -1,0 +1,16 @@
+# 不要忽略所有檔案！
+# 忽略虛擬環境與設定檔
+.env
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+*.db
+*.sqlite3
+*.log
+
+# VSCode 設定檔（如果有）
+.vscode/
+
+# 其他不需要上傳的檔案
+.DS_Store
