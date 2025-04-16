@@ -1,5 +1,6 @@
 import os
 import openai
+import json
 from datetime import datetime
 
 openai.api_key = os.getenv("OPENAI_API_KEY")
