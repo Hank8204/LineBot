@@ -1,3 +1,4 @@
+line-bot-sdk==3.2.0
 flask
 line-bot-sdk
 openai
